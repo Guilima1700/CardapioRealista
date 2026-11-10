@@ -1,0 +1,22 @@
+project_id = "brasa-restaurant"
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 50000
+[db]
+port = 54322
+major_version = 15
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+enable_signup = false
+[storage]
+enabled = true
+file_size_limit = "30MiB"
+[realtime]
+enabled = true
