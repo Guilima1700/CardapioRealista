@@ -12,7 +12,10 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
     "test:e2e": "playwright test",
-    "test:chrome": "playwright test --config playwright.chrome.config.ts"
+    "test:chrome": "playwright test --config playwright.chrome.config.ts",
+    "test:production": "playwright test --config playwright.production.config.ts",
+    "check:deployment": "node scripts/check-deployment.mjs",
+    "lint": "eslint src tests scripts --max-warnings=0"
   },
   "dependencies": {
     "@google/model-viewer": "^4.1.0",
@@ -29,15 +32,18 @@
     "zod": "^4.1.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.56.0",
     "@tailwindcss/postcss": "^4.1.0",
     "@types/node": "^22.19.0",
     "@types/qrcode": "^1.5.5",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
+    "eslint": "^10.14.0",
     "prettier": "^3.9.10",
     "tailwindcss": "^4.1.0",
     "tsx": "^4.20.0",
-    "typescript": "^5.9.0"
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.72.2"
   }
 }

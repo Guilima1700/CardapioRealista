@@ -49,7 +49,7 @@ Crie **um projeto Supabase separado para cada restaurante**. O frontend e as API
 
 Esta seção descreve a opção de migrar toda a operação para Supabase em uma implantação nova. O projeto conectado nesta entrega utiliza o módulo de mídia descrito em [3D-AR.md](docs/3D-AR.md), preservando autenticação e pedidos existentes. Não execute indiscriminadamente `db push` sobre ele: a migration de fundação antiga não consta no histórico remoto.
 
-1. Aplique `supabase/migrations/202611090001_foundation.sql` no SQL Editor do projeto, ou use o Supabase CLI com `supabase link --project-ref SEU_REF` e `supabase db push`.
+1. Em um projeto novo, aplique as migrations versionadas em ordem. No projeto existente, confira primeiro o histórico remoto: a estrutura principal e o módulo de mídia já foram implantados. Para Vercel, siga [docs/VERCEL.md](docs/VERCEL.md).
 2. Aplique `supabase/seed.sql` se quiser iniciar com o cardápio demonstrativo. Ele não apaga dados existentes. Para gerar tokens de mesa novos antes de uma nova implantação, rode `npx tsx scripts/seed-sql.ts` e aplique o arquivo gerado **apenas no banco novo**.
 3. No painel Auth, crie o primeiro usuário administrador, com senha exclusiva.
 4. Associe o usuário à equipe pelo SQL Editor:
@@ -77,7 +77,7 @@ Nunca prefixe a service role com `NEXT_PUBLIC_`. Ela é usada exclusivamente nos
 
 O bucket público `product-assets` é criado pela migration para imagens e modelos. Apenas o servidor autorizado envia arquivos. A URL pública é necessária para Scene Viewer e Quick Look; não use esse bucket para conteúdo privado.
 
-**Verificação atual:** o módulo de mídia foi implantado via MCP e testado no Supabase real, incluindo Storage e RPCs de associação/arquivamento. O backend completo de pedidos em PostgreSQL é uma opção separada e não foi ativado. A ancoragem AR em aparelhos físicos ainda exige homologação em HTTPS.
+**Verificação atual:** mídia, estrutura principal e catálogo foram implantados no Supabase via MCP. Checkout idempotente e avanço de status foram validados em transação desfeita ao final. A troca efetiva do servidor exige as variáveis do backend remoto e uma conta administrativa Supabase Auth. A configuração Vercel e a homologação física de AR continuam necessárias; consulte [docs/VERCEL.md](docs/VERCEL.md).
 
 ## Produção e persistência
 
@@ -197,7 +197,9 @@ Os testes de domínio verificam preços, adulteração de valores, quantidades, 
 
 ## Limites e próximos serviços
 
-- O módulo de mídia Supabase está configurado e verificado. AR físico depende de HTTPS e aparelhos Android/iOS para homologação final; o backend completo de pedidos Supabase não foi ativado nesta instalação.
+Os novos módulos de **pedido coletivo por NFC/QR, avaliações e inteligência comercial** estão descritos em [PEDIDOS-AVALIACOES-INTELIGENCIA.md](docs/PEDIDOS-AVALIACOES-INTELIGENCIA.md), incluindo uso, migrations, permissões, métricas, separação de demonstração e procedimentos de publicação. Os comandos adicionais são `npm run lint` e `npm run test:chrome`.
+
+- A mídia e o banco principal Supabase estão preparados. A instalação local permanece em SQLite; a Vercel precisa das variáveis do backend remoto e da conta administrativa. AR físico depende de HTTPS e aparelhos Android/iOS para homologação final.
 - Não há pagamento online, emissão fiscal, PDV ou envio a impressora térmica nesta entrega. Nenhum botão simula essas operações.
 - A integração futura de impressão/PDV deve consumir `integration_outbox` após commit. O contrato `src/lib/server/integrations.ts` define o adaptador; nenhum envio externo está ativado. Implemente deduplicação pelo ID do evento, retentativa e marcação de `processed_at` apenas após confirmação do dispositivo/PDV. Não imprima dentro da transação do pedido.
 - Personalização visual modular de 3D depende de malhas/materiais produzidos para isso; os modelos atuais não são modulares.

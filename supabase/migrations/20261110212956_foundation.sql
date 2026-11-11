@@ -1,4 +1,5 @@
--- One restaurant per database. All public operations go through the Next.js server.
+-- One restaurant per database. Applied remotely as 20261110212956.
+-- All public operations go through the Next.js server.
 create extension if not exists pgcrypto;
 create table public.restaurant_settings(id integer primary key check(id=1),data jsonb not null);
 create table public.menu_categories(id text primary key,data jsonb not null);
@@ -134,13 +135,16 @@ end $$;
 
 -- SECURITY DEFINER has a fixed empty search_path and exposes only a boolean.
 create function public.is_staff() returns boolean language sql stable security definer set search_path='' as $$select exists(select 1 from public.staff_users where id=auth.uid() and active)$$;
-revoke all on all tables in schema public from anon,authenticated;
-revoke all on all sequences in schema public from anon,authenticated;
+-- Scope grants to this module; preserve the already deployed media module.
+do $$declare tbl text;begin foreach tbl in array array['restaurant_settings','menu_categories','menu_items','restaurant_tables','modifier_groups','modifiers','item_variants','product_assets','staff_users','orders','order_items','order_status_history','analytics_events','integration_outbox'] loop
+  execute format('revoke all on public.%I from anon,authenticated',tbl);
+  execute format('grant all on public.%I to service_role',tbl);
+end loop;end$$;
+revoke all on sequence public.order_number_seq from anon,authenticated;
 revoke execute on function public.place_order(jsonb),public.advance_order(uuid,text,integer),public.sync_product_relations(),public.sync_order_relations() from public,anon,authenticated;
 revoke execute on function public.is_staff() from public,anon;
 grant execute on function public.is_staff() to authenticated,service_role;
-grant all on all tables in schema public to service_role;
-grant all on all sequences in schema public to service_role;
+grant all on sequence public.order_number_seq to service_role;
 grant execute on function public.place_order(jsonb),public.advance_order(uuid,text,integer) to service_role;
 do $$declare tbl text;begin foreach tbl in array array['restaurant_settings','menu_categories','menu_items','restaurant_tables','modifier_groups','modifiers','product_assets','staff_users','orders','order_items','order_status_history','analytics_events','integration_outbox'] loop execute format('alter table public.%I enable row level security',tbl);end loop;end$$;
 grant select on public.orders to authenticated;

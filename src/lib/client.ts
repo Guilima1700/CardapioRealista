@@ -30,16 +30,62 @@ export async function api<T>(
     throw new Error(data.error || "Falha de conexão. Tente novamente.");
   return data;
 }
-export function track(type: string, productId?: string, categoryId?: string) {
+let fallbackSession = "";
+let analyticsTableId: string | undefined;
+const viewEvents = new Map<string, string>();
+export function analyticsSessionId() {
   try {
-    let sessionId = sessionStorage.getItem("brasa_session");
-    if (!sessionId) {
-      sessionId = createClientId();
-      sessionStorage.setItem("brasa_session", sessionId);
-    }
+    const id = sessionStorage.getItem("brasa_session");
+    if (id && /^[a-f0-9-]{36}$/i.test(id)) return id;
+    if (!fallbackSession) fallbackSession = createClientId();
+    sessionStorage.setItem("brasa_session", fallbackSession);
+    return fallbackSession;
+  } catch {
+    if (!fallbackSession) fallbackSession = createClientId();
+    return fallbackSession;
+  }
+}
+export function setAnalyticsTable(id?: string) {
+  analyticsTableId = id;
+}
+export function track(
+  type: string,
+  productId?: string,
+  categoryId?: string,
+  metadata?: { modifierId?: string; recommendationId?: string },
+) {
+  try {
+    const sessionId = analyticsSessionId(),
+      key = [
+        sessionId,
+        type,
+        productId,
+        categoryId,
+        metadata?.recommendationId,
+      ].join(":");
+    const unique = [
+      "menu_open",
+      "category_view",
+      "product_view",
+      "model_view",
+      "ar_start",
+      "recommendation_view",
+    ].includes(type);
+    const id = unique
+      ? viewEvents.get(key) || createClientId()
+      : createClientId();
+    if (unique) viewEvents.set(key, id);
     void api("/api/analytics", {
       method: "POST",
-      body: JSON.stringify({ type, productId, categoryId, sessionId }),
+      body: JSON.stringify({
+        id,
+        type,
+        productId,
+        categoryId,
+        sessionId,
+        tableId: analyticsTableId,
+        metadata,
+      }),
     }).catch(() => {});
   } catch {}
 }

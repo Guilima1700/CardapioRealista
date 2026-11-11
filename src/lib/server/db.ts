@@ -5,6 +5,7 @@ import path from "node:path";
 import { randomBytes, randomUUID, scryptSync } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { seed } from "../seed";
+import { migrateExperiences } from "./experience-sqlite";
 import {
   AppError,
   assertTransition,
@@ -69,6 +70,7 @@ export function localDb() {
     CREATE TABLE IF NOT EXISTS integration_outbox (id TEXT PRIMARY KEY, order_id TEXT NOT NULL REFERENCES orders(id), version INTEGER NOT NULL, event_type TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL, processed_at TEXT, attempts INTEGER NOT NULL DEFAULT 0, UNIQUE(order_id,version));
     CREATE INDEX IF NOT EXISTS outbox_pending_idx ON integration_outbox(processed_at,created_at);
   `);
+  migrateExperiences(sqlite);
   if (!sqlite.prepare("SELECT id FROM restaurant_settings WHERE id=1").get()) {
     sqlite.exec("BEGIN IMMEDIATE");
     try {
@@ -198,6 +200,7 @@ export async function findOrder(token: string): Promise<Order | undefined> {
 }
 export async function createOrder(
   input: z.infer<typeof checkoutSchema>,
+  insideTransaction = false,
 ): Promise<Order> {
   if (backend === "supabase") {
     const { data, error } = await supabase().rpc("place_order", {
@@ -214,7 +217,7 @@ export async function createOrder(
     return data;
   }
   const db = localDb();
-  db.exec("BEGIN IMMEDIATE");
+  if (!insideTransaction) db.exec("BEGIN IMMEDIATE");
   try {
     const existing = db
       .prepare("SELECT data FROM orders WHERE idempotency_key=?")
@@ -226,7 +229,7 @@ export async function createOrder(
         .get(order.tableId) as { token: string };
       if (table.token !== input.tableToken)
         throw new AppError("Chave de pedido inválida.", 409);
-      db.exec("COMMIT");
+      if (!insideTransaction) db.exec("COMMIT");
       return order;
     }
     const catalog = getLocalCatalog();
@@ -269,6 +272,15 @@ export async function createOrder(
           ? [{ status: "confirmed" as Status, at }]
           : []),
       ],
+      analyticsSessionId: input.analyticsSessionId,
+      dataMode:
+        JSON.parse(
+          (
+            db
+              .prepare("SELECT data FROM experience_settings WHERE id=1")
+              .get() as { data: string } | undefined
+          )?.data || "{}",
+        ).dataMode || "production",
     };
     db.prepare(
       "INSERT INTO orders(id,number,tracking_token,idempotency_key,table_id,status,version,created_at,data) VALUES (?,?,?,?,?,?,?,?,?)",
@@ -294,10 +306,10 @@ export async function createOrder(
       hist.run(randomUUID(), order.id, h.status, h.at),
     );
     enqueueIntegrationEvent(db, order, "order.created");
-    db.exec("COMMIT");
+    if (!insideTransaction) db.exec("COMMIT");
     return order;
   } catch (error) {
-    db.exec("ROLLBACK");
+    if (!insideTransaction) db.exec("ROLLBACK");
     throw error;
   }
 }
@@ -477,7 +489,7 @@ export async function setStaffActive(id: string, active: boolean) {
     dbError(error);
   }
 }
-export async function recordEvent(event: AnalyticsEvent) {
+export async function recordEvent(event: AnalyticsEvent, verified = false) {
   const catalog = await getCatalog();
   if (
     event.productId &&
@@ -489,26 +501,62 @@ export async function recordEvent(event: AnalyticsEvent) {
     !catalog.categories.some((c) => c.id === event.categoryId)
   )
     throw new AppError("Categoria inválida.");
+  if (
+    event.tableId &&
+    !catalog.tables.some((t) => t.id === event.tableId && t.active)
+  )
+    throw new AppError("Mesa inválida.");
+  let dataMode: string;
+  if (backend === "sqlite")
+    dataMode =
+      JSON.parse(
+        (
+          localDb()
+            .prepare("SELECT data FROM experience_settings WHERE id=1")
+            .get() as { data: string } | undefined
+        )?.data || "{}",
+      ).dataMode || "production";
+  else {
+    const r = await supabase()
+      .from("experience_settings")
+      .select("data")
+      .eq("id", 1)
+      .maybeSingle();
+    dbError(r.error);
+    dataMode = r.data?.data?.dataMode || "production";
+  }
   if (backend === "sqlite")
     localDb()
       .prepare(
-        "INSERT INTO analytics_events(id,type,product_id,category_id,session_id,created_at) VALUES (?,?,?,?,?,?)",
+        "INSERT OR IGNORE INTO analytics_events(id,type,product_id,category_id,session_id,created_at,table_id,metadata,verified) VALUES (?,?,?,?,?,?,?,?,?)",
       )
       .run(
-        randomUUID(),
+        event.id || randomUUID(),
         event.type,
         event.productId || null,
         event.categoryId || null,
         event.sessionId,
         new Date().toISOString(),
+        event.tableId || null,
+        JSON.stringify({ ...event.metadata, dataMode }),
+        verified ? 1 : 0,
       );
   else {
-    const { error } = await supabase().from("analytics_events").insert({
-      type: event.type,
-      product_id: event.productId,
-      category_id: event.categoryId,
-      session_id: event.sessionId,
-    });
+    const { error } = await supabase()
+      .from("analytics_events")
+      .upsert(
+        {
+          id: event.id || randomUUID(),
+          type: event.type,
+          product_id: event.productId,
+          category_id: event.categoryId,
+          session_id: event.sessionId,
+          table_id: event.tableId,
+          metadata: { ...event.metadata, dataMode },
+          verified,
+        },
+        { onConflict: "id", ignoreDuplicates: true },
+      );
     dbError(error);
   }
 }
@@ -516,7 +564,7 @@ export async function listEvents(since: string) {
   if (backend === "sqlite")
     return localDb()
       .prepare(
-        "SELECT type,product_id,category_id,session_id,created_at FROM analytics_events WHERE created_at>=? ORDER BY created_at DESC LIMIT 50000",
+        "SELECT type,product_id,category_id,session_id,created_at FROM analytics_events WHERE created_at>=? AND json_extract(metadata,'$.dataMode')='production' ORDER BY created_at DESC LIMIT 50000",
       )
       .all(since) as {
       type: string;
@@ -529,6 +577,7 @@ export async function listEvents(since: string) {
     .from("analytics_events")
     .select("type,product_id,category_id,session_id,created_at")
     .gte("created_at", since)
+    .eq("metadata->>dataMode", "production")
     .order("created_at", { ascending: false })
     .limit(50000);
   dbError(error);

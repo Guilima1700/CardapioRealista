@@ -1,0 +1,22 @@
+// Read-only snapshot and additive import. Never exports password hashes or staff sessions.
+import { DatabaseSync, backup } from 'node:sqlite';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+const source = path.resolve(process.env.DATA_DIR || './data', 'brasa.sqlite');
+mkdirSync('.tools', { recursive: true });
+const db = new DatabaseSync(source, { readOnly: true });
+const snapshot = `.tools/production-backup-${Date.now()}.sqlite`;
+await backup(db, snapshot);
+const q = value => "'" + String(value).replaceAll("'", "''") + "'";
+const json = value => q(JSON.stringify(value)) + '::jsonb';
+const rows = table => db.prepare(`select data from ${table}`).all().map(r => JSON.parse(r.data));
+const settings = rows('restaurant_settings')[0], categories = rows('menu_categories'), products = rows('menu_items'), tables = rows('restaurant_tables'), orders = rows('orders');
+const sql = ['begin;', `insert into public.restaurant_settings values(1,${json(settings)}) on conflict(id) do nothing;`];
+for (const x of categories) sql.push(`insert into public.menu_categories values(${q(x.id)},${json(x)}) on conflict(id) do nothing;`);
+for (const x of products) sql.push(`insert into public.menu_items values(${q(x.id)},${q(x.categoryId)},${json(x)}) on conflict(id) do nothing;`);
+for (const x of tables) sql.push(`insert into public.restaurant_tables values(${q(x.id)},${q(x.token)},${json(x)}) on conflict(id) do nothing;`);
+for (const x of orders) sql.push(`insert into public.orders(id,number,tracking_token,idempotency_key,table_id,status,version,total,created_at,data) values(${q(x.id)},${x.number},${q(x.trackingToken)},${q(x.idempotencyKey)},${q(x.tableId)},${q(x.status)},${x.version},${x.total},${q(x.createdAt)},${json(x)}) on conflict(id) do nothing;`);
+sql.push("select setval('public.order_number_seq',greatest((select last_value from public.order_number_seq),coalesce((select max(number) from public.orders),1)),exists(select 1 from public.orders));", 'commit;');
+writeFileSync('.tools/production-import.sql', sql.join('\n'));
+console.log(JSON.stringify({snapshot,categories:categories.length,products:products.length,tables:tables.length,orders:orders.length,staff:'not exported; Supabase Auth account required'}));
+db.close();

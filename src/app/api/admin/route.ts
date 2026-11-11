@@ -29,6 +29,12 @@ export const GET = endpoint(async (request) => {
   return {
     catalog,
     orders: orders.filter((o) => o.createdAt >= since),
+    reportOrders: orders.filter(
+      (o) => o.createdAt >= since && o.dataMode === "production",
+    ),
+    unclassifiedOrders: orders.filter(
+      (o) => o.createdAt >= since && !o.dataMode,
+    ).length,
     staff,
     events,
     since,

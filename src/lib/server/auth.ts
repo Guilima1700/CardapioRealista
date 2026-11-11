@@ -6,7 +6,7 @@ import {
   scryptSync,
   timingSafeEqual,
 } from "node:crypto";
-import { backend, localDb, listStaff, supabase } from "./db";
+import { backend, localDb, listStaff } from "./db";
 import { AppError } from "../validation";
 import type { Role } from "../types";
 const developmentSecret = randomBytes(32).toString("hex");

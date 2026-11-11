@@ -1,5 +1,6 @@
 import { getCatalog } from "@/lib/server/db";
 import Menu from "@/components/menu";
+import { publicCatalog } from "@/lib/public-catalog";
 export const dynamic = "force-dynamic";
 export async function generateMetadata() {
   const { settings } = await getCatalog();
@@ -24,8 +25,7 @@ export default async function Page({
   return (
     <Menu
       initial={{
-        ...catalog,
-        products: catalog.products.filter((p) => p.available),
+        ...publicCatalog(catalog),
         tables: table ? [table] : [],
       }}
       table={table}

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { browserEventTypes } from "./event-types";
 import type { CartLine, Catalog, PricedLine, Status } from "./types";
 export class AppError extends Error {
   constructor(
@@ -19,18 +20,21 @@ export const checkoutSchema = z.object({
   idempotencyKey: z.uuid(),
   payment: z.enum(["cashier", "table"]),
   items: z.array(cartLineSchema).min(1).max(30),
+  analyticsSessionId: z.uuid().optional(),
 });
 export const eventSchema = z.object({
-  type: z.enum([
-    "product_view",
-    "model_view",
-    "ar_start",
-    "add_to_cart",
-    "category_view",
-  ]),
+  id: z.uuid().optional(),
+  type: z.enum(browserEventTypes),
   productId: z.string().max(100).optional(),
   categoryId: z.string().max(100).optional(),
   sessionId: z.uuid(),
+  tableId: z.string().max(100).optional(),
+  metadata: z
+    .object({
+      modifierId: z.string().max(100).optional(),
+      recommendationId: z.uuid().optional(),
+    })
+    .optional(),
 });
 export const productSchema = z
   .object({
@@ -59,6 +63,13 @@ export const productSchema = z
     allergens: z.array(z.string().max(60)).max(20),
     prepMinutes: z.number().int().min(1).max(240),
     vegetarian: z.boolean().optional(),
+    costs: z
+      .object({
+        production: z.number().int().min(0).max(1000000).optional(),
+        ingredients: z.number().int().min(0).max(1000000).optional(),
+        additional: z.number().int().min(0).max(1000000).optional(),
+      })
+      .optional(),
     modelUrl: z
       .string()
       .max(2000)
@@ -105,6 +116,7 @@ export const productSchema = z
                   id: z.string().min(1).max(100),
                   name: z.string().min(1).max(100),
                   price: z.number().int().min(0).max(100000),
+                  featured: z.boolean().optional(),
                 }),
               )
               .max(30),

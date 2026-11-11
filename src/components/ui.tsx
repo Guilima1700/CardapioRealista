@@ -39,14 +39,19 @@ export function Spinner() {
 export function Empty({
   title,
   children,
+  icon: Icon = Flame,
+  text,
 }: {
   title: string;
   children?: React.ReactNode;
+  icon?: typeof Flame;
+  text?: string;
 }) {
   return (
     <div className="empty">
-      <Flame size={36} />
+      <Icon size={36} />
       <h3>{title}</h3>
+      {text && <p>{text}</p>}
       {children}
     </div>
   );

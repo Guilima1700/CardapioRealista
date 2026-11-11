@@ -1,10 +1,10 @@
 "use client";
+import { CollectivePanel } from "./experience-admin";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Bell,
   BellOff,
-  Check,
   ChefHat,
   Clock,
   ArrowRight,
@@ -18,13 +18,7 @@ import {
 } from "lucide-react";
 import { api } from "@/lib/client";
 import { useLive } from "@/lib/use-live";
-import {
-  statuses,
-  statusLabels,
-  type Order,
-  type Status,
-  money,
-} from "@/lib/types";
+import { statuses, statusLabels, type Order, money } from "@/lib/types";
 import { Brand, Spinner } from "./ui";
 import { useHydrated } from "@/lib/use-hydrated";
 export default function Kitchen({
@@ -183,6 +177,10 @@ export default function Kitchen({
         </div>
       </header>
       <main className="kitchen-main">
+        <a className="back-link" href="/atendimento">
+          Atendimento e avaliações →
+        </a>
+        <CollectivePanel compact />
         <div className="kitchen-summary">
           <div>
             <span className="eyebrow">CADA PEDIDO, NO PONTO CERTO</span>
@@ -309,6 +307,11 @@ export default function Kitchen({
                                   <span>{item.quantity}×</span>
                                   <div>
                                     <h4>{item.name}</h4>
+                                    {item.participantName && (
+                                      <b className="participant-label">
+                                        {item.participantName}
+                                      </b>
+                                    )}
                                     {item.modifiers.length > 0 && (
                                       <p>
                                         {item.modifiers

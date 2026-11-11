@@ -1,4 +1,5 @@
 "use client";
+import CustomerRecommendations from "./customer-recommendations";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -6,7 +7,6 @@ import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   ArrowUpRight,
-  ArrowLeft,
   Plus,
   Minus,
   ShoppingBag,
@@ -18,7 +18,6 @@ import {
   MapPin,
   Leaf,
   Check,
-  ChevronRight,
   UtensilsCrossed,
   GlassWater,
   IceCreamBowl,
@@ -30,7 +29,12 @@ import {
   AlertCircle,
   QrCode,
 } from "lucide-react";
-import { api, track } from "@/lib/client";
+import {
+  api,
+  track,
+  analyticsSessionId,
+  setAnalyticsTable,
+} from "@/lib/client";
 import { createClientId } from "@/lib/client-id";
 import {
   readStored,
@@ -48,6 +52,11 @@ import {
   type Order,
 } from "@/lib/types";
 import { Brand, Modal, Empty, Spinner } from "./ui";
+import {
+  GroupOrderProvider,
+  GroupEntryBanner,
+  useCollective,
+} from "./group-order";
 const ModelViewer = dynamic(() => import("./model-viewer"), {
   ssr: false,
   loading: () => <div className="viewer-loading">Carregando visualizador…</div>,
@@ -71,7 +80,7 @@ function linePrice(line: CartLine, products: Product[]) {
         line.quantity
     : 0;
 }
-export default function Menu({
+function MenuContent({
   initial,
   table,
   demo,
@@ -81,6 +90,12 @@ export default function Menu({
   demo: boolean;
 }) {
   const router = useRouter();
+  const collective = useCollective();
+  useEffect(() => {
+    setAnalyticsTable(table?.id);
+    track("menu_open");
+    return () => setAnalyticsTable(undefined);
+  }, [table?.id]);
   const [catalog, setCatalog] = useState(initial),
     [category, setCategory] = useState("burgers"),
     [search, setSearch] = useState(""),
@@ -189,6 +204,17 @@ export default function Menu({
     ),
     count = cart.reduce((s, line) => s + line.quantity, 0);
   const settings = catalog.settings;
+  const bagCount = collective?.view
+    ? collective.view.items.reduce((n, i) => n + i.quantity, 0)
+    : count;
+  useEffect(() => {
+    if (collective?.editing) {
+      const product = catalog.products.find(
+        (p) => p.id === collective.editing?.productId,
+      );
+      if (product) setSelected(product);
+    }
+  }, [collective?.editing, catalog.products]);
   function open(p: Product, model = false) {
     setSelected(p);
     setModelMode(model);
@@ -201,8 +227,9 @@ export default function Menu({
     setFavorites(next);
     writeStored("brasa_favorites", JSON.stringify(next));
   }
-  function add(line: CartLine) {
-    setCart((old) => [...old, { ...line, key: createClientId() }]);
+  async function add(line: CartLine) {
+    if (collective?.view) await collective.add(line);
+    else setCart((old) => [...old, { ...line, key: createClientId() }]);
     setSelected(null);
     track("add_to_cart", line.productId);
     setToast("Boa escolha! Adicionado ao seu pedido.");
@@ -213,6 +240,7 @@ export default function Menu({
       return;
     }
     setPending(true);
+    track("checkout_start");
     setError("");
     try {
       const fingerprint = JSON.stringify({
@@ -240,6 +268,7 @@ export default function Menu({
         body: JSON.stringify({
           tableToken: table.token,
           idempotencyKey: key,
+          analyticsSessionId: analyticsSessionId(),
           payment,
           items: cart.map(({ key, ...line }) => line),
         }),
@@ -310,16 +339,24 @@ export default function Menu({
             <button
               disabled={!hydrated}
               className="bag-button"
-              aria-label={`Abrir sacola, ${count} itens`}
-              onClick={() => setCartOpen(true)}
+              aria-label={`Abrir sacola${collective?.view ? " coletiva" : ""}, ${bagCount} itens`}
+              onClick={() =>
+                collective?.view ? collective.open() : setCartOpen(true)
+              }
             >
               <ShoppingBag size={20} />
-              {count > 0 && <b>{count}</b>}
+              {bagCount > 0 && <b>{bagCount}</b>}
             </button>
           </div>
         </div>
       </header>
       <main className="menu-shell">
+        <GroupEntryBanner />
+        <CustomerRecommendations
+          products={catalog.products}
+          onSelect={open}
+          timezone={settings.timezone}
+        />
         <section className="hero">
           <div className="hero-copy">
             <div className="eyebrow">
@@ -397,7 +434,8 @@ export default function Menu({
             disabled={!hydrated}
             onClick={() => {
               const p = catalog.products.find(hasModel3d);
-              p ? open(p, true) : setInfo(true);
+              if (p) open(p, true);
+              else setInfo(true);
             }}
           >
             Viva a experiência <ArrowRight size={17} />
@@ -641,7 +679,7 @@ export default function Menu({
           </Link>
         </div>
       )}
-      {count > 0 && !cartOpen && (
+      {count > 0 && !cartOpen && !collective?.view && (
         <button
           disabled={!hydrated}
           className="floating-cart"
@@ -663,11 +701,15 @@ export default function Menu({
       )}
       {selected && (
         <ProductDialog
-          key={selected.id}
+          key={selected.id + ":" + (collective?.editing?.id || "new")}
           product={selected}
           startModel={modelMode}
-          onClose={() => setSelected(null)}
+          onClose={() => {
+            setSelected(null);
+            collective?.setEditing(null);
+          }}
           onAdd={add}
+          initialLine={collective?.editing || undefined}
         />
       )}
       {cartOpen && (
@@ -764,11 +806,12 @@ export default function Menu({
                             disabled={pending}
                             className="icon-button"
                             aria-label={`Remover ${p?.name || "item"}`}
-                            onClick={() =>
+                            onClick={() => {
+                              track("remove_from_cart", line.productId);
                               setCart((c) =>
                                 c.filter((l) => l.key !== line.key),
-                              )
-                            }
+                              );
+                            }}
                           >
                             <Trash2 size={15} />
                           </button>
@@ -886,24 +929,40 @@ export default function Menu({
     </div>
   );
 }
+export default function Menu(props: Parameters<typeof MenuContent>[0]) {
+  return props.table ? (
+    <GroupOrderProvider
+      table={props.table}
+      payments={props.initial.settings.payments}
+      accent={props.initial.settings.color}
+    >
+      <MenuContent {...props} />
+    </GroupOrderProvider>
+  ) : (
+    <MenuContent {...props} />
+  );
+}
 function ProductDialog({
   product: p,
-  startModel,
   onClose,
   onAdd,
+  initialLine,
 }: {
   product: Product;
   startModel: boolean;
   onClose: () => void;
-  onAdd: (line: CartLine) => void;
+  onAdd: (line: CartLine) => void | Promise<void>;
+  initialLine?: CartLine;
 }) {
   const [model, setModel] = useState(hasModel3d(p)),
     [ids, setIds] = useState<string[]>(
-      p.groups.flatMap((g) => g.options.slice(0, g.min).map((o) => o.id)),
+      initialLine?.modifierIds ||
+        p.groups.flatMap((g) => g.options.slice(0, g.min).map((o) => o.id)),
     ),
-    [qty, setQty] = useState(1),
-    [notes, setNotes] = useState(""),
+    [qty, setQty] = useState(initialLine?.quantity || 1),
+    [notes, setNotes] = useState(initialLine?.notes || ""),
     [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const unit =
     p.price +
     p.groups
@@ -921,7 +980,7 @@ function ProductDialog({
       setIds((old) => [...old, id]);
     else setError(`Escolha até ${group.max} opções em ${group.name}.`);
   }
-  function add() {
+  async function add() {
     const invalid = p.groups.find((g) => {
       const count = g.options.filter((o) => ids.includes(o.id)).length;
       return count < g.min || count > g.max;
@@ -930,7 +989,14 @@ function ProductDialog({
       setError(`Revise a seleção: ${invalid.name}.`);
       return;
     }
-    onAdd({ productId: p.id, quantity: qty, modifierIds: ids, notes });
+    setSubmitting(true);
+    try {
+      await onAdd({ productId: p.id, quantity: qty, modifierIds: ids, notes });
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setSubmitting(false);
+    }
   }
   return (
     <Modal label={`Personalizar ${p.name}`} onClose={onClose} wide>
@@ -999,7 +1065,11 @@ function ProductDialog({
             </p>
           )}
           {p.groups.map((g) => (
-            <fieldset className="modifier-group" key={g.id}>
+            <fieldset
+              className="modifier-group"
+              key={g.id}
+              disabled={submitting}
+            >
               <legend>
                 {g.name}
                 <small>
@@ -1017,11 +1087,23 @@ function ProductDialog({
                     name={g.id}
                     checked={ids.includes(o.id)}
                     onChange={() => {
+                      track("product_customize", p.id);
+                      if (!ids.includes(o.id))
+                        track("modifier_select", p.id, undefined, {
+                          modifierId: o.id,
+                        });
                       setError("");
                       toggle(g, o.id);
                     }}
                   />
-                  <span>{o.name}</span>
+                  <span>
+                    {o.name}
+                    {o.featured && (
+                      <small className="participant-label">
+                        Destaque da casa
+                      </small>
+                    )}
+                  </span>
                   <small>{o.price ? `+ ${money(o.price)}` : "Incluso"}</small>
                 </label>
               ))}
@@ -1031,6 +1113,7 @@ function ProductDialog({
             Alguma observação?
             <textarea
               maxLength={500}
+              disabled={submitting}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Ex.: sem tomate, molho à parte…"
@@ -1047,7 +1130,7 @@ function ProductDialog({
             <div className="quantity">
               <button
                 aria-label="Diminuir quantidade"
-                disabled={qty <= 1}
+                disabled={submitting || qty <= 1}
                 onClick={() => setQty(qty - 1)}
               >
                 <Minus size={16} />
@@ -1055,14 +1138,25 @@ function ProductDialog({
               <span>{qty}</span>
               <button
                 aria-label="Aumentar quantidade"
-                disabled={qty >= 20}
+                disabled={submitting || qty >= 20}
                 onClick={() => setQty(qty + 1)}
               >
                 <Plus size={16} />
               </button>
             </div>
-            <button className="button primary" onClick={add}>
-              Adicionar <span>{money(unit * qty)}</span>
+            <button
+              className="button primary"
+              disabled={submitting}
+              onClick={() => void add()}
+            >
+              {submitting ? (
+                <Spinner />
+              ) : initialLine ? (
+                "Salvar alterações"
+              ) : (
+                "Adicionar"
+              )}{" "}
+              <span>{money(unit * qty)}</span>
               <Plus size={17} />
             </button>
           </div>

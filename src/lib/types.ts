@@ -15,7 +15,12 @@ export const statusLabels: Record<Status, string> = {
   ready: "Pronto",
   delivered: "Entregue",
 };
-export type Modifier = { id: string; name: string; price: number };
+export type Modifier = {
+  id: string;
+  name: string;
+  price: number;
+  featured?: boolean;
+};
 export type ModifierGroup = {
   id: string;
   name: string;
@@ -47,6 +52,7 @@ export type Product = {
   imageAssetId?: string;
   modelPresentation?: ModelPresentation;
   vegetarian?: boolean;
+  costs?: { production?: number; ingredients?: number; additional?: number };
 };
 export type ModelPresentation = {
   cameraTheta: number;
@@ -110,6 +116,9 @@ export type CartLine = {
   quantity: number;
   modifierIds: string[];
   notes: string;
+  participantId?: string;
+  participantName?: string;
+  analyticsSessionId?: string;
 };
 export type PricedLine = CartLine & {
   name: string;
@@ -133,18 +142,19 @@ export type Order = {
   payment: "cashier" | "table";
   items: PricedLine[];
   history: { status: Status; at: string }[];
+  analyticsSessionId?: string;
+  groupSessionId?: string;
+  dataMode?: "production" | "demo";
 };
 export type Staff = { id: string; email: string; role: Role; active: boolean };
 export type AnalyticsEvent = {
-  type:
-    | "product_view"
-    | "model_view"
-    | "ar_start"
-    | "add_to_cart"
-    | "category_view";
+  id?: string;
+  type: (typeof import("./event-types").allEventTypes)[number];
   productId?: string;
   categoryId?: string;
   sessionId: string;
+  tableId?: string;
+  metadata?: { modifierId?: string; recommendationId?: string };
 };
 export const money = (cents: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(

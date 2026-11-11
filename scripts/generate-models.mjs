@@ -49,7 +49,7 @@ function leaf(group, y, rotation) {
       r = 0.068 + Math.sin(a * 9) * 0.005;
     const x = Math.cos(a) * r,
       z = Math.sin(a) * r;
-    i === 0 ? shape.moveTo(x, z) : shape.lineTo(x, z);
+    if(i===0)shape.moveTo(x,z);else shape.lineTo(x,z);
   }
   const geo = new THREE.ExtrudeGeometry(shape, {
     depth: 0.002,

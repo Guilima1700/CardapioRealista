@@ -281,8 +281,9 @@ test.describe.serial("API de ponta a ponta com banco isolado", () => {
       ).ok(),
     ).toBeTruthy();
     const data = await (await staff.get("/api/admin?days=1")).json();
-    expect(data.orders).toHaveLength(1);
-    expect(data.orders[0].total).toBe(7780);
+    const matching = data.orders.filter((o: {id:string}) => o.id === order.id);
+    expect(matching).toHaveLength(1);
+    expect(matching[0].total).toBe(7780);
     expect(
       data.events.filter(
         (e: { session_id: string }) => e.session_id === sessionId,

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import './experiences.css';
 export const metadata: Metadata = {
   title: "Cardápio · Uma nova experiência à mesa.",
   description:

@@ -15,6 +15,7 @@ import {
 import { useLive } from "@/lib/use-live";
 import { money, statuses, statusLabels, type Order } from "@/lib/types";
 import { Brand } from "./ui";
+import OrderReview from "./order-review";
 export default function OrderTracking({
   initial,
   name,
@@ -138,6 +139,11 @@ export default function OrderTracking({
               <span className="item-qty">{item.quantity}×</span>
               <div>
                 <b>{item.name}</b>
+                {item.participantName && (
+                  <small className="participant-label">
+                    {item.participantName}
+                  </small>
+                )}
                 <small>{item.modifiers.map((m) => m.name).join(" · ")}</small>
                 {item.notes && <p>Obs.: {item.notes}</p>}
               </div>
@@ -157,6 +163,7 @@ export default function OrderTracking({
             A confirmação do pedido não confirma pagamento.
           </p>
         </section>
+        <OrderReview token={initial.trackingToken} status={order.status} />
         <p className="tracking-help">
           Precisa ajustar algo? Fale com nossa equipe e informe o número do
           pedido.

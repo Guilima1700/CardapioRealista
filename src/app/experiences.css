@@ -1,0 +1,733 @@
+/* Namespaced layers preserve the existing dialog and 3D compositing rules. */
+.brasa-nfc-url {
+  display: grid;
+  gap: 7px;
+  text-align: left;
+  font-size: 10px;
+  color: #756e60;
+  margin: 16px 0;
+}
+.brasa-nfc-url input {
+  width: 100%;
+  padding: 9px;
+  border: 1px solid #e3ddcf;
+  border-radius: 7px;
+  font-size: 10px;
+  background: #fffdf7;
+}
+.brasa-review-card fieldset.brasa-review-issues {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 8px;
+}
+.brasa-review-issues legend {
+  float: none !important;
+  width: 100%;
+  margin-bottom: 10px;
+}
+.brasa-review-issues label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  border: 1px solid #d9d0bd;
+  border-radius: 18px;
+  padding: 8px 10px;
+  background: #faf7ef;
+}
+.brasa-group-invite {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: 24px 0;
+  padding: 22px 26px;
+  border: 1px solid #ded8ca;
+  background: #f0eee5;
+  border-radius: 18px;
+}
+.brasa-social-icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  background: #fffaf1;
+  color: var(--accent, #b84a2b);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.brasa-group-invite b {
+  font-family: var(--display-font, Georgia, serif);
+  font-size: 21px;
+}
+.brasa-group-invite p {
+  margin: 5px 0 0;
+  color: #716b60;
+  font-size: 13px;
+}
+.brasa-group-invite .button {
+  margin-left: auto;
+  white-space: nowrap;
+}
+.brasa-group-floating {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  box-shadow: 0 8px 30px #36271338;
+  white-space: nowrap;
+}
+.brasa-group-dialog {
+  padding: 34px;
+}
+.brasa-group-dialog h2,
+.brasa-review-card h2 {
+  font-family: var(--display-font, Georgia, serif);
+  font-size: 32px;
+  margin: 10px 0 20px;
+}
+.brasa-group-dialog form {
+  display: grid;
+  gap: 16px;
+}
+.brasa-social-field {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.brasa-social-field input,
+.brasa-social-field textarea,
+.brasa-social-field select,
+.brasa-social-inline input,
+.brasa-insight-filters input,
+.brasa-insight-filters select,
+.brasa-admin-review select,
+.brasa-experience-settings input:not([type="checkbox"]),
+.brasa-experience-settings select {
+  width: 100%;
+  padding: 12px 14px;
+  background: #fffdf8;
+  border: 1px solid #ded8cc;
+  border-radius: 9px;
+  color: #2d3029;
+  font: inherit;
+}
+.brasa-social-field textarea {
+  min-height: 95px;
+  resize: vertical;
+}
+.brasa-social-inline {
+  display: flex !important;
+  gap: 10px;
+  align-items: center;
+  margin: 16px 0;
+}
+.brasa-social-inline input {
+  flex: 1;
+  min-width: 0;
+}
+.brasa-social-inline .button {
+  white-space: nowrap;
+}
+.brasa-group-status {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  border-bottom: 1px solid #e5dfd3;
+  padding-bottom: 16px;
+}
+.brasa-group-status > span {
+  color: var(--accent, #b84a2b);
+  font-weight: 700;
+}
+.brasa-group-status small {
+  color: #797569;
+}
+.brasa-group-members {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin: 18px 0;
+}
+.brasa-group-members > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  background: #f3f0e8;
+  border-radius: 24px;
+  padding: 5px 10px 5px 5px;
+}
+.brasa-group-members i {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-style: normal;
+  font-weight: 700;
+}
+.brasa-group-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 290px;
+  gap: 24px;
+}
+.brasa-group-person {
+  padding: 16px 0;
+  border-top: 1px solid #e2ddcf;
+}
+.brasa-group-person h3 {
+  font-size: 16px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.brasa-group-person h3 small {
+  margin-left: auto;
+  color: #827c6c;
+  font-size: 10px;
+}
+.brasa-group-line {
+  padding: 16px 0;
+  border-bottom: 1px dashed #e5dfd5;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+.brasa-group-line b {
+  font-size: 14px;
+}
+.brasa-group-line p {
+  font-size: 12px;
+  color: #6b685f;
+  margin: 5px 0;
+}
+.brasa-group-line strong {
+  display: block;
+  font-size: 13px;
+  margin-top: 8px;
+}
+.brasa-group-line-actions {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 170px;
+}
+.brasa-group-subtotal {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  padding-top: 12px;
+  color: #746d60;
+}
+.brasa-group-subtotal b {
+  color: #2f322c;
+  white-space: nowrap;
+}
+.brasa-group-summary {
+  padding: 22px;
+  background: #f1eee5;
+  border-radius: 14px;
+  align-self: start;
+  display: grid;
+  gap: 14px;
+}
+.brasa-group-summary h3 {
+  font-size: 32px;
+  margin: 0;
+}
+.brasa-group-summary p {
+  font-size: 12px;
+  line-height: 1.7;
+  margin: 0;
+  color: #706b60;
+}
+.brasa-group-summary > div {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+.participant-label {
+  display: block;
+  color: var(--accent, #a94529);
+  font-size: 11px;
+  margin: 5px 0;
+  font-weight: 700;
+}
+.brasa-collective-staff {
+  margin-bottom: 22px;
+}
+.brasa-staff-group {
+  padding: 18px 0;
+  border-top: 1px solid #e5dfd3;
+}
+.brasa-staff-group > div:first-child {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.brasa-staff-group small {
+  color: #797368;
+}
+.brasa-staff-group .button {
+  padding: 7px 10px;
+  font-size: 11px;
+}
+.brasa-review-card {
+  padding: 30px;
+  background: #eeeadd;
+  border: 1px solid #dfd8c8;
+  border-radius: 18px;
+  margin-top: 28px;
+}
+.brasa-review-card > svg {
+  color: var(--accent, #b84a2b);
+}
+.brasa-review-card > p {
+  font-size: 14px;
+  color: #756d5e;
+  line-height: 1.7;
+}
+.brasa-review-card form {
+  display: grid;
+  gap: 18px;
+  margin: 24px 0;
+}
+.brasa-review-card fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+.brasa-review-card legend {
+  float: left;
+  font-size: 14px;
+  font-weight: 600;
+}
+.brasa-stars {
+  display: flex;
+  gap: 4px;
+}
+.brasa-stars label {
+  position: relative;
+  color: #c0b5a2;
+  cursor: pointer;
+}
+.brasa-stars label.selected {
+  color: #b84a2b;
+}
+.brasa-stars input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.brasa-stars label:has(input:focus-visible) {
+  outline: 2px solid #b84a2b;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+.brasa-issue-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.brasa-issue-tags span,
+.brasa-issue-tags label {
+  font-size: 12px;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  background: #f7f3ea;
+  border: 1px solid #dbd4c6;
+  border-radius: 20px;
+  padding: 7px 12px;
+}
+.brasa-review-discreet {
+  background: transparent;
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.brasa-review-card .check-label,
+.brasa-experience-settings .check-label,
+.brasa-recommendation-details .check-label {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.brasa-review-card input[type="checkbox"],
+.brasa-experience-settings input[type="checkbox"],
+.brasa-recommendation-details input[type="checkbox"] {
+  accent-color: var(--accent, #b84a2b);
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+.brasa-insights {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+.brasa-insight-filters {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 18px 22px;
+  border: 1px solid #e3ddcf;
+  background: #f7f4ec;
+  border-radius: 14px;
+}
+.brasa-insight-filters label {
+  display: grid;
+  gap: 7px;
+  font-size: 11px;
+  min-width: 145px;
+  flex: 1;
+}
+.brasa-insight-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+}
+.brasa-insight-metric {
+  background: #fffdf8;
+  border: 1px solid #e4ddce;
+  border-radius: 14px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.brasa-insight-metric small {
+  color: #6c6a60;
+  font-size: 11px;
+}
+.brasa-insight-metric strong {
+  font-size: 27px;
+  letter-spacing: -0.8px;
+  color: #34392f;
+}
+.brasa-insight-metric p {
+  font-size: 10px;
+  line-height: 1.7;
+  margin: 0;
+  color: #827a6b;
+}
+.brasa-insight-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+.brasa-insights .panel {
+  min-width: 0;
+  padding: 24px;
+}
+.brasa-insights h3 {
+  font-family: var(--display-font, Georgia, serif);
+  font-size: 23px;
+  margin: 0 0 20px;
+}
+.brasa-insights .fine-print {
+  font-size: 11px;
+  line-height: 1.8;
+}
+.brasa-funnel {
+  display: grid;
+  gap: 18px;
+  margin: 24px 0;
+}
+.brasa-funnel > div {
+  display: grid;
+  gap: 7px;
+}
+.brasa-funnel span {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+.brasa-funnel i {
+  display: block;
+  height: 9px;
+  background: #b84a2b;
+  border-radius: 5px;
+  opacity: 0.8;
+}
+.brasa-funnel small {
+  font-size: 10px;
+  color: #847b6b;
+}
+.brasa-recommendation {
+  padding: 20px 0;
+  border-top: 1px solid #e4ddcf;
+}
+.brasa-recommendation h4 {
+  font-size: 16px;
+  margin: 12px 0;
+}
+.brasa-recommendation p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: #6c665a;
+}
+.brasa-recommendation small {
+  display: block;
+  font-size: 10px;
+  color: #8a7d68;
+  line-height: 1.7;
+}
+.brasa-recommendation .text-link {
+  margin-top: 14px;
+  display: flex;
+  gap: 7px;
+  align-items: center;
+}
+.brasa-recommendation-details {
+  padding: 32px;
+  display: grid;
+  gap: 18px;
+}
+.brasa-recommendation-details h2 {
+  font-size: 30px;
+  font-family: var(--display-font, Georgia, serif);
+  margin: 0;
+}
+.brasa-recommendation-details p {
+  line-height: 1.8;
+  font-size: 13px;
+}
+.brasa-stat-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid #e8e2d6;
+  padding-bottom: 12px;
+  font-size: 12px;
+}
+.brasa-stat-row small {
+  font-size: 10px;
+  color: #867c69;
+}
+.brasa-hour-chart {
+  height: 150px;
+  display: flex;
+  gap: 5px;
+  align-items: flex-end;
+  padding-bottom: 22px;
+}
+.brasa-hour-chart > div {
+  position: relative;
+  height: 100%;
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+}
+.brasa-hour-chart i {
+  width: 100%;
+  background: #b84a2b;
+  border-radius: 3px 3px 0 0;
+  opacity: 0.75;
+  min-height: 1px;
+}
+.brasa-hour-chart small {
+  position: absolute;
+  bottom: -20px;
+  text-align: center;
+  left: 0;
+  right: 0;
+  font-size: 9px;
+  color: #827765;
+}
+.brasa-admin-review header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+.brasa-admin-review header label {
+  font-size: 11px;
+  display: grid;
+  gap: 7px;
+  align-self: start;
+}
+.brasa-admin-review header h3 {
+  margin: 8px 0;
+}
+.brasa-admin-review time {
+  font-size: 11px;
+  color: #817867;
+}
+.brasa-admin-review p,
+.brasa-admin-review blockquote,
+.brasa-admin-review details {
+  font-size: 13px;
+  line-height: 1.8;
+}
+.brasa-admin-review blockquote {
+  border-left: 3px solid #b84a2b;
+  padding-left: 18px;
+  margin: 20px 0;
+}
+.brasa-review-evolution > div {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-size: 12px;
+  padding: 10px 0;
+}
+.brasa-review-evolution meter {
+  flex: 1;
+  accent-color: #b84a2b;
+}
+.brasa-review-evolution small {
+  color: #877d6b;
+}
+.brasa-experience-settings {
+  padding: 28px;
+}
+.brasa-experience-settings .form-grid {
+  gap: 22px;
+}
+.brasa-experience-settings label {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+}
+.brasa-service-shell {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 30px 24px;
+}
+.brasa-service-shell > h1 {
+  font-family: var(--display-font, Georgia, serif);
+  margin: 24px 0;
+}
+.brasa-customer-recommendations {
+  margin: 24px 0;
+  padding: 26px;
+  background: #ece8db;
+  border-radius: 16px;
+}
+.brasa-customer-recommendations h2 {
+  font: 26px var(--display-font, Georgia, serif);
+  margin: 10px 0 20px;
+}
+.brasa-customer-recommendations > div {
+  display: flex;
+  gap: 20px;
+  overflow: auto;
+}
+.brasa-customer-recommendations article {
+  flex: 1;
+  min-width: 240px;
+  max-width: 370px;
+}
+.brasa-customer-recommendations p {
+  font-size: 14px;
+}
+.brasa-customer-recommendations small {
+  font-size: 11px;
+  color: #7e7566;
+}
+.brasa-customer-recommendations button {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  border: 1px solid #dbd3c1;
+  background: #fffdf6;
+  border-radius: 12px;
+  padding: 12px;
+  margin-top: 10px;
+}
+.brasa-customer-recommendations img {
+  width: 55px;
+  height: 55px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+.brasa-customer-recommendations button > span:nth-child(2) {
+  display: grid;
+  gap: 5px;
+  flex: 1;
+}
+@media (max-width: 850px) {
+  .brasa-group-columns {
+    grid-template-columns: 1fr;
+  }
+  .brasa-insight-columns {
+    grid-template-columns: 1fr;
+  }
+  .brasa-group-invite {
+    flex-wrap: wrap;
+    padding: 18px;
+    gap: 12px;
+  }
+  .brasa-group-invite > div:nth-child(2) {
+    flex: 1;
+  }
+  .brasa-group-invite b {
+    font-size: 18px;
+  }
+  .brasa-group-invite .button {
+    width: 100%;
+    margin: 0;
+  }
+  .brasa-group-dialog {
+    padding: 25px 20px;
+  }
+  .brasa-review-card fieldset {
+    display: grid;
+    gap: 10px;
+  }
+  .brasa-review-card legend {
+    float: none;
+  }
+  .brasa-stars {
+    gap: 14px;
+  }
+  .brasa-review-discreet {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .brasa-group-line {
+    flex-wrap: wrap;
+  }
+  .brasa-group-line-actions {
+    max-width: none;
+  }
+  .brasa-insight-filters {
+    padding: 14px;
+  }
+  .brasa-admin-review header {
+    flex-wrap: wrap;
+  }
+  .brasa-review-evolution > div {
+    flex-wrap: wrap;
+  }
+  .brasa-insights .panel {
+    padding: 20px;
+  }
+  .brasa-insight-metric {
+    padding: 17px;
+  }
+  .brasa-group-status {
+    flex-wrap: wrap;
+  }
+  .brasa-group-floating {
+    max-width: calc(100vw - 30px);
+    font-size: 12px;
+  }
+}

@@ -1,4 +1,5 @@
 import { defineConfig } from "@playwright/test";
+process.env.BRASA_TEST_DATA_DIR ||= `./data/test-${Date.now()}`;
 export default defineConfig({
   testDir: "./tests",
   testMatch: "*.e2e.ts",
@@ -17,7 +18,7 @@ export default defineConfig({
       DATA_BACKEND: "sqlite",
       ASSET_BACKEND: "local",
       NEXT_PUBLIC_DATA_BACKEND: "sqlite",
-      DATA_DIR: `./data/test-${Date.now()}`,
+      DATA_DIR: process.env.BRASA_TEST_DATA_DIR,
       NEXT_PUBLIC_APP_URL: "http://127.0.0.1:3100",
       SESSION_SECRET: "isolated-test-session-secret-12345678901234567890",
       DEMO_ADMIN_EMAIL: "admin@brasa.local",

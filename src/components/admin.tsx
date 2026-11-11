@@ -22,14 +22,12 @@ import {
   Flame,
   Pencil,
   Check,
-  Upload,
   Download,
   Printer,
   Menu as MenuIcon,
   Eye,
   ShoppingBag,
   TrendingUp,
-  Clock,
   Save,
   Trash2,
 } from "lucide-react";
@@ -58,6 +56,12 @@ import {
 import { Brand, Modal, Empty, Spinner } from "./ui";
 import ProductMediaEditor from "./product-media-editor";
 import { hasModel3d } from "@/lib/product-media";
+import {
+  CollectivePanel,
+  ReviewsPanel,
+  CommercePanel,
+  ExperienceSettingsPanel,
+} from "./experience-admin";
 type Event = {
   type: string;
   product_id: string | null;
@@ -72,6 +76,8 @@ type AdminData = {
   events: Event[];
   since: string;
   days: number;
+  unclassifiedOrders?: number;
+  reportOrders?: Order[];
 };
 const sections = [
   ["dashboard", "Visão geral", LayoutDashboard],
@@ -86,6 +92,10 @@ const sections = [
   ["qr", "QR Codes", QrCode],
   ["staff", "Funcionários", Users],
   ["reports", "Relatórios", ChartNoAxesCombined],
+  ["collective", "Pedidos coletivos", Users],
+  ["reviews", "Avaliações", Check],
+  ["intelligence", "Inteligência Comercial", TrendingUp],
+  ["experience", "Experiência da mesa", SlidersHorizontal],
   ["settings", "Configurações", Settings],
 ] as const;
 export default function Admin() {
@@ -270,6 +280,14 @@ export default function Admin() {
               {error}
             </p>
           )}
+          {!!data?.unclassifiedOrders && (
+            <p className="notice">
+              {data.unclassifiedOrders} pedidos anteriores não têm classificação
+              de origem. Eles permanecem em Pedidos e ficam fora dos indicadores
+              reais. Os dados de demonstração podem ser consultados
+              separadamente em Inteligência Comercial.
+            </p>
+          )}
           {!data ? (
             <div className="empty">
               <Spinner />
@@ -281,7 +299,10 @@ export default function Admin() {
           ) : (
             <>
               {["dashboard", "reports"].includes(section) && (
-                <Reports data={data} detailed={section === "reports"} />
+                <Reports
+                  data={{ ...data, orders: data.reportOrders || [] }}
+                  detailed={section === "reports"}
+                />
               )}
               {["menu", "products", "models", "modifiers"].includes(
                 section,
@@ -412,6 +433,15 @@ export default function Admin() {
               )}
               {section === "qr" && <QRPanel catalog={catalog!} />}
               {section === "orders" && <OrdersPanel orders={data.orders} />}
+              {section === "collective" && <CollectivePanel />}
+              {section === "reviews" && <ReviewsPanel />}
+              {section === "intelligence" && (
+                <CommercePanel
+                  catalog={catalog!}
+                  onMenuChange={() => void load()}
+                />
+              )}
+              {section === "experience" && <ExperienceSettingsPanel />}
               {section === "staff" && (
                 <StaffPanel staff={data.staff} save={save} busy={busy} />
               )}
@@ -1014,7 +1044,7 @@ function QRPanel({ catalog }: { catalog: Catalog }) {
             [
               t.id,
               await QRCode.toDataURL(
-                `${base.replace(/\/$/, "")}/?mesa=${encodeURIComponent(t.token)}`,
+                `${base.replace(/\/$/, "")}/mesa/${encodeURIComponent(t.id.replace(/^table-/, ""))}`,
                 {
                   width: 500,
                   margin: 2,
@@ -1078,6 +1108,15 @@ function QRPanel({ catalog }: { catalog: Catalog }) {
               )}
               <h3>{t.name}</h3>
               <span>ESCANEIE. ESCOLHA. APROVEITE.</span>
+              <label className="brasa-nfc-url">
+                Endereço para gravar na tag NFC
+                <input
+                  aria-label={`URL NFC ${t.name}`}
+                  readOnly
+                  onFocus={(e) => e.target.select()}
+                  value={`${base.replace(/\/$/, "")}/mesa/${encodeURIComponent(t.id.replace(/^table-/, ""))}`}
+                />
+              </label>
               <div className="qr-card-actions">
                 <a
                   className="button secondary"
@@ -1089,7 +1128,7 @@ function QRPanel({ catalog }: { catalog: Catalog }) {
                 <a
                   className="button secondary"
                   target="_blank"
-                  href={`${base.replace(/\/$/, "")}/?mesa=${encodeURIComponent(t.token)}`}
+                  href={`${base.replace(/\/$/, "")}/mesa/${encodeURIComponent(t.id.replace(/^table-/, ""))}`}
                 >
                   Testar <ArrowUpRight size={14} />
                 </a>
@@ -1177,6 +1216,11 @@ function OrdersPanel({ orders }: { orders: Order[] }) {
                 <span>{i.quantity}×</span>
                 <div>
                   <b>{i.name}</b>
+                  {i.participantName && (
+                    <small className="participant-label">
+                      {i.participantName}
+                    </small>
+                  )}
                   <small>{i.modifiers.map((m) => m.name).join(", ")}</small>
                   <p>{i.notes}</p>
                 </div>
@@ -1630,6 +1674,48 @@ function ProductEditor({
                 onChange={(e) => setP({ ...p, ingredients: e.target.value })}
               />
             </label>
+            <fieldset className="group-editor">
+              <legend>Custos e margem estimada</legend>
+              <p className="fine-print">
+                Valores em reais. O custo total de produção, quando informado,
+                substitui a soma de ingredientes e custo adicional. Campos
+                vazios mantêm o custo desconhecido.
+              </p>
+              <div className="form-grid">
+                {(
+                  [
+                    ["production", "Custo total de produção"],
+                    ["ingredients", "Custo dos ingredientes"],
+                    ["additional", "Outros custos por unidade"],
+                  ] as const
+                ).map(([key, label]) => (
+                  <label key={key}>
+                    {label}
+                    <input
+                      type="number"
+                      min="0"
+                      max="10000"
+                      step="0.01"
+                      value={
+                        p.costs?.[key] === undefined ? "" : p.costs[key]! / 100
+                      }
+                      onChange={(e) =>
+                        setP({
+                          ...p,
+                          costs: {
+                            ...p.costs,
+                            [key]:
+                              e.target.value === ""
+                                ? undefined
+                                : Math.round(Number(e.target.value) * 100),
+                          },
+                        })
+                      }
+                    />
+                  </label>
+                ))}
+              </div>
+            </fieldset>
             <div className="form-checks">
               <label className="checkbox-label">
                 <input
